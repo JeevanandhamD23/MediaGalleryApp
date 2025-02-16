@@ -1,174 +1,72 @@
 import React, { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
-import { Layout, Menu, Typography, Button, Input, Space } from 'antd';
+import { Layout, Menu, Typography, Button, Input, Space, message } from 'antd';
 import { debounce } from 'lodash';
 import {
   PictureOutlined,
-  BellOutlined,
   FolderOutlined,
-  FileOutlined,
   StarOutlined,
-  TeamOutlined,
-  EnvironmentOutlined,
   VideoCameraOutlined,
-  ClockCircleOutlined,
-  LockOutlined,
-  CloudOutlined,
   PlusOutlined,
   DeleteOutlined,
   SearchOutlined,
+  BellOutlined,
+  FileOutlined,
+  TeamOutlined,
+  EnvironmentOutlined,
+  ClockCircleOutlined,
+  LockOutlined,
+  CloudOutlined,
 } from '@ant-design/icons';
-import PhotoGallery from '../components/PhotoGallery';
-import PhotoUpload from '../components/PhotoUpload';
-import StorageSection from '../components/StorageSection';
-import VideoGallery from '../components/VideoGallery';
+import Header from '../components/layout/Header';
+import Sidebar from '../components/layout/Sidebar';
+import ImagesSection from '../features/images/ImagesSection';
+import VideosSection from '../features/videos/VideosSection';
+import TrashSection from '../features/trash/TrashSection';
+import StorageSection from '../features/storage/StorageSection';
+import MediaUpload from '../features/upload/MediaUpload';
+import ErrorBoundary from '../components/common/ErrorBoundary';
+import Loading from '../components/common/Loading';
 
-const { Header, Content, Sider } = Layout;
-const { Title } = Typography;
-const { Search } = Input;
+const { Content } = Layout;
 
 function Homepage() {
-  const [photos, setPhotos] = useState({ photos: [] });
+  const [photos, setPhotos] = useState({ images: [] });
   const [collapsed, setCollapsed] = useState(false);
   const [loading, setLoading] = useState(false);
   const [currentSection, setCurrentSection] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const searchRef = useRef(null);
+  const [videos, setVideos] = useState([]);
+  const [trashItems, setTrashItems] = useState([]);
+  const [refreshCallbacks, setRefreshCallbacks] = useState({});
+  const allSectionRef = useRef(null);
+  const photosSectionRef = useRef(null);
+  const videosSectionRef = useRef(null);
 
-  // Create a debounced version of fetchPhotos
-  const debouncedFetch = useRef(
-    debounce((section, query) => {
-      fetchPhotos(section, query);
-    }, 500)
-  ).current;
-
-  // Cleanup debounce on unmount
-  useEffect(() => {
-    return () => {
-      debouncedFetch.cancel();
-    };
-  }, [debouncedFetch]);
-
-  const fetchPhotos = async (section = 'all', query = '') => {
+  const fetchTrashItems = async () => {
     try {
-      let endpoint = `${process.env.REACT_APP_API_URL}/api/photos`;
+      setLoading(true);
+      const response = await axios.get('http://localhost:5000/api/trash');
+      const items = response.data.items || [];
 
-      switch (section) {
-        case 'all':
-          endpoint = `${process.env.REACT_APP_API_URL}/api/photos${
-            query ? `?search=${encodeURIComponent(query)}` : ''
-          }`;
-          break;
-        case 'photos':
-          endpoint = `${process.env.REACT_APP_API_URL}/api/photos/images${
-            query ? `?search=${encodeURIComponent(query)}` : ''
-          }`;
-          break;
-        case 'favorites':
-          endpoint = `${process.env.REACT_APP_API_URL}/api/photos/starred${
-            query ? `?search=${encodeURIComponent(query)}` : ''
-          }`;
-          break;
-        case 'trash':
-          endpoint = `${process.env.REACT_APP_API_URL}/api/photos/trash${
-            query ? `?search=${encodeURIComponent(query)}` : ''
-          }`;
-          break;
-        case 'videos':
-          endpoint = `${process.env.REACT_APP_API_URL}/api/photos/videos${
-            query ? `?search=${encodeURIComponent(query)}` : ''
-          }`;
-          break;
-        default:
-          endpoint = `${process.env.REACT_APP_API_URL}/api/photos${
-            query ? `?search=${encodeURIComponent(query)}` : ''
-          }`;
-      }
+      // Separate items by type
+      const images = items.filter(
+        (item) => item.originalCollection === 'images'
+      );
+      const videos = items.filter(
+        (item) => item.originalCollection === 'videos'
+      );
 
-      const response = await axios.get(endpoint);
-      setPhotos(response.data);
+      setPhotos({ images });
+      setVideos(videos);
     } catch (err) {
-      console.error('Error fetching photos:', err);
+      console.error('Error fetching trash items:', err);
+      message.error('Failed to fetch trash items');
+    } finally {
+      setLoading(false);
     }
   };
-
-  const renderContent = () => {
-    if (currentSection === 'storage') {
-      return <StorageSection />;
-    }
-
-    if (!photos.photos?.length) {
-      return (
-        <div style={{ textAlign: 'center', padding: '50px' }}>
-          <Title level={3}>
-            {currentSection === 'trash'
-              ? 'Trash is empty'
-              : 'Ready to add some media?'}
-          </Title>
-          <p>
-            {currentSection === 'trash'
-              ? 'No deleted items found'
-              : 'Click the upload button to add photos or videos'}
-          </p>
-        </div>
-      );
-    }
-
-    if (currentSection === 'all') {
-      const images = photos.photos.filter((item) =>
-        item.mimetype.startsWith('image/')
-      );
-      const videos = photos.photos.filter((item) =>
-        item.mimetype.startsWith('video/')
-      );
-
-      return (
-        <div>
-          {videos.length > 0 && (
-            <div style={{ marginBottom: '2rem' }}>
-              <Title level={4}>Videos</Title>
-              <VideoGallery
-                videos={videos}
-                onRefresh={() => fetchPhotos(currentSection)}
-              />
-            </div>
-          )}
-          {images.length > 0 && (
-            <div>
-              <Title level={4}>Photos</Title>
-              <PhotoGallery
-                photos={images}
-                onRefresh={() => fetchPhotos(currentSection)}
-                isTrash={false}
-              />
-            </div>
-          )}
-        </div>
-      );
-    }
-
-    if (currentSection === 'videos') {
-      return (
-        <VideoGallery
-          videos={photos.photos}
-          onRefresh={() => fetchPhotos(currentSection)}
-          isTrash={currentSection === 'trash'}
-        />
-      );
-    }
-
-    return (
-      <PhotoGallery
-        photos={photos.photos}
-        onRefresh={() => fetchPhotos(currentSection)}
-        isTrash={currentSection === 'trash'}
-      />
-    );
-  };
-
-  useEffect(() => {
-    debouncedFetch(currentSection, searchQuery);
-  }, [currentSection, searchQuery, debouncedFetch]);
 
   const handleMenuClick = ({ key }) => {
     setCurrentSection(key);
@@ -181,6 +79,81 @@ function Homepage() {
   const handleSearch = (value) => {
     setSearchQuery(value);
   };
+
+  const handleUploadSuccess = () => {
+    // Call all registered refresh callbacks
+    Object.values(refreshCallbacks).forEach((callback) => {
+      if (typeof callback === 'function') {
+        callback();
+      }
+    });
+  };
+
+  // Register refresh callbacks when refs change
+  useEffect(() => {
+    const newCallbacks = {};
+
+    if (allSectionRef.current) {
+      newCallbacks.all = allSectionRef.current.fetchMedia;
+    }
+    if (photosSectionRef.current) {
+      newCallbacks.photos = photosSectionRef.current.fetchMedia;
+    }
+    if (videosSectionRef.current) {
+      newCallbacks.videos = videosSectionRef.current.fetchVideos;
+    }
+
+    setRefreshCallbacks(newCallbacks);
+  }, [currentSection]);
+
+  const renderContent = () => {
+    switch (currentSection) {
+      case 'all':
+        return (
+          <div>
+            {loading ? (
+              <Loading tip="Loading media..." />
+            ) : (
+              <ImagesSection
+                query={searchQuery}
+                isAllMedia={true}
+                ref={allSectionRef}
+              />
+            )}
+          </div>
+        );
+      case 'photos':
+        return <ImagesSection query={searchQuery} ref={photosSectionRef} />;
+      case 'videos':
+        return <VideosSection query={searchQuery} ref={videosSectionRef} />;
+      case 'trash':
+        return <TrashSection />;
+      case 'storage':
+        return <StorageSection />;
+      case 'favorites':
+        return (
+          <div>
+            {loading ? (
+              <Loading tip="Loading media..." />
+            ) : (
+              <ImagesSection
+                query={searchQuery}
+                isAllMedia={true}
+                isStarred={true}
+              />
+            )}
+          </div>
+        );
+      default:
+        return <ImagesSection query={searchQuery} />;
+    }
+  };
+
+  useEffect(() => {
+    if (currentSection === 'trash') {
+      fetchTrashItems();
+    }
+  }, [currentSection]);
 
   const menuItems = [
     { key: 'all', icon: <PictureOutlined />, label: 'All Media' },
@@ -203,70 +176,20 @@ function Homepage() {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        collapsible
+      <Sidebar
         collapsed={collapsed}
-        onCollapse={(value) => setCollapsed(value)}
-        style={{ background: '#fff' }}
-      >
-        <div style={{ padding: '16px', textAlign: 'center' }}>
-          <Title level={4} style={{ margin: 0 }}>
-            Media App
-          </Title>
-        </div>
-        <Menu
-          mode="inline"
-          defaultSelectedKeys={['all']}
-          selectedKeys={[currentSection]}
-          onClick={handleMenuClick}
-          style={{ height: '100%', borderRight: 0 }}
-          items={menuItems}
-        />
-      </Sider>
+        onCollapse={setCollapsed}
+        currentSection={currentSection}
+        onMenuClick={handleMenuClick}
+        menuItems={menuItems}
+      />
       <Layout>
         <Header
-          style={{
-            background: '#fff',
-            padding: '0 16px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <div
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '16px',
-              flex: 1,
-            }}
-          >
-            <Title level={4} style={{ margin: 0, minWidth: 'fit-content' }}>
-              My Photos
-            </Title>
-            <Search
-              ref={searchRef}
-              placeholder={`Search ${
-                currentSection === 'videos'
-                  ? 'videos'
-                  : currentSection === 'photos'
-                  ? 'photos'
-                  : 'media'
-              } by description...`}
-              allowClear
-              onSearch={handleSearch}
-              onChange={(e) => {
-                setSearchQuery(e.target.value);
-              }}
-              style={{ width: 300 }}
-            />
-          </div>
-          <PhotoUpload onUploadSuccess={fetchPhotos}>
-            <Button type="primary" icon={<PlusOutlined />} loading={loading}>
-              Upload
-            </Button>
-          </PhotoUpload>
-        </Header>
+          onSearch={handleSearch}
+          onUploadSuccess={handleUploadSuccess}
+          currentSection={currentSection}
+          searchRef={searchRef}
+        />
         <Content
           style={{
             margin: '24px 16px',

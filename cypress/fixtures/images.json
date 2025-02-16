@@ -1,0 +1,21 @@
+{
+  "images": [
+    {
+      "_id": "1",
+      "title": "test1.jpg",
+      "url": "/uploads/test1.jpg",
+      "mimetype": "image/jpeg"
+    },
+    {
+      "_id": "2",
+      "title": "test2.jpg",
+      "url": "/uploads/test2.jpg",
+      "mimetype": "image/jpeg"
+    }
+  ],
+  "pagination": {
+    "total": 2,
+    "page": 1,
+    "pages": 1
+  }
+}

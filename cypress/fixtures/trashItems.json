@@ -1,0 +1,23 @@
+{
+  "items": [
+    {
+      "_id": "1",
+      "title": "test-image.jpg",
+      "mimetype": "image/jpeg",
+      "url": "/uploads/test-image.jpg",
+      "originalCollection": "images"
+    },
+    {
+      "_id": "2",
+      "title": "test-video.mp4",
+      "mimetype": "video/mp4",
+      "url": "/uploads/test-video.mp4",
+      "originalCollection": "videos"
+    }
+  ],
+  "pagination": {
+    "total": 2,
+    "page": 1,
+    "pages": 1
+  }
+}

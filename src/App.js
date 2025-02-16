@@ -1,14 +1,18 @@
 import React from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import Homepage from './Homepage';
+import { BrowserRouter as Router } from 'react-router-dom';
+import { ConfigProvider } from 'antd';
+import Homepage from './Homepage/Homepage';
+import ErrorBoundary from './components/common/ErrorBoundary';
 
 function App() {
     return (
-        <Router>
-            <Routes>
-                <Route path="/" element={<Homepage />} />
-            </Routes>
-        </Router>
+        <ConfigProvider>
+            <ErrorBoundary>
+                <Router>
+                    <Homepage />
+                </Router>
+            </ErrorBoundary>
+        </ConfigProvider>
     );
 }
 

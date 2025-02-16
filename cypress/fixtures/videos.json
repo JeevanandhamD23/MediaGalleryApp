@@ -1,0 +1,15 @@
+{
+  "videos": [
+    {
+      "_id": "1",
+      "title": "test1.mp4",
+      "url": "/uploads/test1.mp4",
+      "mimetype": "video/mp4"
+    }
+  ],
+  "pagination": {
+    "total": 1,
+    "page": 1,
+    "pages": 1
+  }
+}

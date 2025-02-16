@@ -1,10 +1,13 @@
 {
   "name": "server",
   "version": "1.0.0",
-  "main": "server.js",
+  "description": "",
+  "main": "index.js",
   "scripts": {
-    "start": "node server.js",
-    "dev": "nodemon server.js"
+    "start": "node app.js",
+    "test": "NODE_ENV=test mocha",
+    "test:watch": "NODE_ENV=test mocha --watch",
+    "test:coverage": "NODE_ENV=test nyc mocha"
   },
   "dependencies": {
     "cors": "^2.8.5",
@@ -12,5 +15,12 @@
     "express": "^4.18.2",
     "mongoose": "^6.10.3",
     "multer": "^1.4.5-lts.1"
+  },
+  "devDependencies": {
+    "chai": "^4.3.7",
+    "mocha": "^10.2.0",
+    "nyc": "^15.1.0",
+    "sinon": "^15.2.0",
+    "mongodb-memory-server": "^9.1.3"
   }
 }
